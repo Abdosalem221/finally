@@ -1,6 +1,7 @@
 
 # Gunicorn configuration file
 import multiprocessing
+import os
 
 # Server socket
 bind = "0.0.0.0:5000"
@@ -10,7 +11,7 @@ backlog = 2048
 workers = multiprocessing.cpu_count() * 2 + 1
 worker_class = 'sync'
 worker_connections = 1000
-timeout = 30
+timeout = 60
 keepalive = 2
 
 # Logging
@@ -30,5 +31,5 @@ group = None
 tmp_upload_dir = None
 
 # SSL
-keyfile = None
-certfile = None
+keyfile = os.environ.get('SSL_KEY_PATH')
+certfile = os.environ.get('SSL_CERT_PATH')
