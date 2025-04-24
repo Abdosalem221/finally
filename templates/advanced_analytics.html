@@ -1,0 +1,1273 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .chart-container {
+        height: 400px;
+        margin-bottom: 20px;
+    }
+    
+    .currency-selector {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .currency-selector .list-group-item {
+        cursor: pointer;
+    }
+    
+    .currency-selector .list-group-item.active {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .timeframe-selector .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .indicator-card {
+        margin-bottom: 15px;
+    }
+    
+    .card-header-tabs {
+        margin-right: -1rem;
+        margin-left: -1rem;
+    }
+    
+    .stats-card {
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-card .stats-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-card .stats-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+    
+    .stats-card .stats-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .correlation-matrix {
+        overflow-x: auto;
+    }
+    
+    .heatmap-cell {
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">لوحة التحليلات المتقدمة</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-data">
+                <i class="fas fa-sync-alt"></i> تحديث البيانات
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="export-data">
+                <i class="fas fa-download"></i> تصدير البيانات
+            </button>
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                <i class="fas fa-calendar"></i> النطاق الزمني
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <li><a class="dropdown-item time-range" data-range="1d" href="#">يوم واحد</a></li>
+                <li><a class="dropdown-item time-range" data-range="1w" href="#">أسبوع</a></li>
+                <li><a class="dropdown-item time-range active" data-range="1m" href="#">شهر</a></li>
+                <li><a class="dropdown-item time-range" data-range="3m" href="#">3 أشهر</a></li>
+                <li><a class="dropdown-item time-range" data-range="6m" href="#">6 أشهر</a></li>
+                <li><a class="dropdown-item time-range" data-range="1y" href="#">سنة</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Market Overview & Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card card">
+            <div class="card-body text-center">
+                <div class="stats-icon bg-primary text-white mx-auto">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5 class="stats-value" id="active-currencies-count">25</h5>
+                <p class="stats-label">عدد الأزواج النشطة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card card">
+            <div class="card-body text-center">
+                <div class="stats-icon bg-success text-white mx-auto">
+                    <i class="fas fa-signal"></i>
+                </div>
+                <h5 class="stats-value" id="active-signals-count">18</h5>
+                <p class="stats-label">الإشارات النشطة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card card">
+            <div class="card-body text-center">
+                <div class="stats-icon bg-info text-white mx-auto">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <h5 class="stats-value" id="volatility-index">32.8</h5>
+                <p class="stats-label">مؤشر التقلب</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card card">
+            <div class="card-body text-center">
+                <div class="stats-icon bg-warning text-white mx-auto">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h5 class="stats-value" id="success-rate">92.5%</h5>
+                <p class="stats-label">معدل نجاح الإشارات</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Currency Selector -->
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">أزواج العملات</h5>
+            </div>
+            <div class="list-group list-group-flush currency-selector" id="currency-list">
+                {% for currency in currencies %}
+                <a href="#" class="list-group-item list-group-item-action {% if loop.first %}active{% endif %}" data-currency="{{ currency.symbol }}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>{{ currency.symbol }}</span>
+                        <span class="badge bg-primary rounded-pill status-indicator">•</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="card-footer">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="بحث..." id="currency-search">
+                    <button class="btn btn-outline-secondary" type="button" id="refresh-currencies">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Timeframe Selector -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">الإطار الزمني</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeframe-selector btn-group d-flex" role="group">
+                    {% for tf in timeframes %}
+                    <input type="radio" class="btn-check" name="timeframe" id="timeframe-{{ tf }}" value="{{ tf }}" {% if tf == '1h' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary" for="timeframe-{{ tf }}">{{ tf }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Market Conditions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">حالة السوق</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="fw-bold">نظام السوق:</span> 
+                    <span class="badge bg-primary" id="market-regime">اتجاهي</span>
+                </div>
+                <div class="mb-3">
+                    <span class="fw-bold">التقلب:</span>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 65%" id="volatility-bar">65%</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <span class="fw-bold">الاتجاه:</span>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 78%" id="trend-strength">78%</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="fw-bold">التشبع:</span>
+                    <div class="progress">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 42%" id="market-saturation">42%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Chart & Analysis -->
+    <div class="col-md-9">
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="chart-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="price-tab" data-bs-toggle="tab" data-bs-target="#price-chart" type="button" role="tab">مخطط السعر</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="technical-tab" data-bs-toggle="tab" data-bs-target="#technical-indicators" type="button" role="tab">المؤشرات الفنية</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="patterns-tab" data-bs-toggle="tab" data-bs-target="#pattern-recognition" type="button" role="tab">التعرف على الأنماط</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ai-analysis-tab" data-bs-toggle="tab" data-bs-target="#ai-analysis" type="button" role="tab">تحليل الذكاء الاصطناعي</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="chart-tabs-content">
+                    <!-- Price Chart Tab -->
+                    <div class="tab-pane fade show active" id="price-chart" role="tabpanel" aria-labelledby="price-tab">
+                        <div class="chart-controls mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold me-2">EUR/USD</span>
+                                <span class="price-value">1.0986</span>
+                                <span class="text-success ms-2">+0.25%</span>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-secondary chart-type active" data-type="candlestick">شموع</button>
+                                <button type="button" class="btn btn-outline-secondary chart-type" data-type="line">خط</button>
+                                <button type="button" class="btn btn-outline-secondary chart-type" data-type="ohlc">OHLC</button>
+                            </div>
+                        </div>
+                        <div class="chart-container" id="main-chart"></div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>مستويات الدعم</h5>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>المستوى</th>
+                                            <th>القوة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="support-levels">
+                                        <tr>
+                                            <td>1.0950</td>
+                                            <td><div class="progress"><div class="progress-bar bg-success" style="width: 80%"></div></div></td>
+                                        </tr>
+                                        <tr>
+                                            <td>1.0920</td>
+                                            <td><div class="progress"><div class="progress-bar bg-success" style="width: 65%"></div></div></td>
+                                        </tr>
+                                        <tr>
+                                            <td>1.0880</td>
+                                            <td><div class="progress"><div class="progress-bar bg-success" style="width: 90%"></div></div></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>مستويات المقاومة</h5>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>المستوى</th>
+                                            <th>القوة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resistance-levels">
+                                        <tr>
+                                            <td>1.1010</td>
+                                            <td><div class="progress"><div class="progress-bar bg-danger" style="width: 75%"></div></div></td>
+                                        </tr>
+                                        <tr>
+                                            <td>1.1050</td>
+                                            <td><div class="progress"><div class="progress-bar bg-danger" style="width: 60%"></div></div></td>
+                                        </tr>
+                                        <tr>
+                                            <td>1.1100</td>
+                                            <td><div class="progress"><div class="progress-bar bg-danger" style="width: 85%"></div></div></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Technical Indicators Tab -->
+                    <div class="tab-pane fade" id="technical-indicators" role="tabpanel" aria-labelledby="technical-tab">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card indicator-card">
+                                    <div class="card-header">مؤشر القوة النسبية (RSI)</div>
+                                    <div class="card-body">
+                                        <div class="indicator-chart" id="rsi-chart" style="height: 200px;"></div>
+                                        <div class="mt-2">
+                                            <span class="fw-bold">القيمة الحالية:</span> <span id="rsi-value">58.6</span>
+                                            <span class="fw-bold ms-3">الحالة:</span> <span class="badge bg-warning" id="rsi-status">محايد</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card indicator-card">
+                                    <div class="card-header">المتوسط المتحرك المتقارب/المتباعد (MACD)</div>
+                                    <div class="card-body">
+                                        <div class="indicator-chart" id="macd-chart" style="height: 200px;"></div>
+                                        <div class="mt-2">
+                                            <span class="fw-bold">MACD:</span> <span id="macd-value">0.0024</span>
+                                            <span class="fw-bold ms-3">الإشارة:</span> <span id="macd-signal">0.0012</span>
+                                            <span class="fw-bold ms-3">الحالة:</span> <span class="badge bg-success" id="macd-status">إيجابي</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card indicator-card">
+                                    <div class="card-header">مؤشر ستوكاستك (Stochastic)</div>
+                                    <div class="card-body">
+                                        <div class="indicator-chart" id="stoch-chart" style="height: 200px;"></div>
+                                        <div class="mt-2">
+                                            <span class="fw-bold">%K:</span> <span id="stoch-k">65.2</span>
+                                            <span class="fw-bold ms-3">%D:</span> <span id="stoch-d">58.7</span>
+                                            <span class="fw-bold ms-3">الحالة:</span> <span class="badge bg-warning" id="stoch-status">محايد</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card indicator-card">
+                                    <div class="card-header">حزم بولنجر (Bollinger Bands)</div>
+                                    <div class="card-body">
+                                        <div class="indicator-chart" id="bb-chart" style="height: 200px;"></div>
+                                        <div class="mt-2">
+                                            <span class="fw-bold">العلوي:</span> <span id="bb-upper">1.1025</span>
+                                            <span class="fw-bold ms-3">المتوسط:</span> <span id="bb-middle">1.0975</span>
+                                            <span class="fw-bold ms-3">السفلي:</span> <span id="bb-lower">1.0925</span>
+                                            <span class="fw-bold ms-3">العرض:</span> <span id="bb-width">0.91%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">ملخص المؤشرات الفنية</div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>الفترة</th>
+                                                        <th>متوسطات متحركة</th>
+                                                        <th>المؤشرات الفنية</th>
+                                                        <th>الخلاصة</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>1 دقيقة</td>
+                                                        <td><span class="badge bg-success">شراء قوي</span></td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>5 دقائق</td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>15 دقيقة</td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>30 دقيقة</td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>1 ساعة</td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                        <td><span class="badge bg-warning">محايد</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>4 ساعات</td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>يومي</td>
+                                                        <td><span class="badge bg-success">شراء</span></td>
+                                                        <td><span class="badge bg-success">شراء قوي</span></td>
+                                                        <td><span class="badge bg-success">شراء قوي</span></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pattern Recognition Tab -->
+                    <div class="tab-pane fade" id="pattern-recognition" role="tabpanel" aria-labelledby="patterns-tab">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">أنماط الشموع المكتشفة</div>
+                                    <div class="card-body">
+                                        <div class="list-group">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">نمط الابتلاع الصعودي</h6>
+                                                    <p class="mb-1 small">تم اكتشافه على شمعة 15:30</p>
+                                                </div>
+                                                <span class="badge bg-success">اتجاه صعودي</span>
+                                            </div>
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">نجمة الصباح</h6>
+                                                    <p class="mb-1 small">تم اكتشافه على شمعة 12:45</p>
+                                                </div>
+                                                <span class="badge bg-success">اتجاه صعودي</span>
+                                            </div>
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">نمط المطرقة</h6>
+                                                    <p class="mb-1 small">تم اكتشافه على شمعة 10:15</p>
+                                                </div>
+                                                <span class="badge bg-success">اتجاه صعودي</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header">الأنماط التوافقية</div>
+                                    <div class="card-body">
+                                        <div class="list-group">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">نمط الفراشة</h6>
+                                                    <p class="mb-1 small">اكتمال 85%، هدف السعر 1.1025</p>
+                                                </div>
+                                                <span class="badge bg-success">اتجاه صعودي</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">أنماط التكوينات السعرية</div>
+                                    <div class="card-body">
+                                        <div class="list-group">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">مثلث صاعد</h6>
+                                                    <p class="mb-1 small">اكتمال 75%، هدف الاختراق 1.1050</p>
+                                                </div>
+                                                <span class="badge bg-success">اتجاه صعودي</span>
+                                            </div>
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">قناة سعرية صاعدة</h6>
+                                                    <p class="mb-1 small">مستوى الدعم 1.0950، المقاومة 1.1025</p>
+                                                </div>
+                                                <span class="badge bg-success">اتجاه صعودي</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header">نقاط الانعكاس المحتملة</div>
+                                    <div class="card-body">
+                                        <div class="list-group">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">مستوى فيبوناتشي 61.8%</h6>
+                                                    <p class="mb-1 small">1.1010، احتمالية الارتداد 72%</p>
+                                                </div>
+                                                <span class="badge bg-warning">انعكاس محتمل</span>
+                                            </div>
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">مستوى سعري سابق</h6>
+                                                    <p class="mb-1 small">1.0920، احتمالية الارتداد 68%</p>
+                                                </div>
+                                                <span class="badge bg-warning">انعكاس محتمل</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Analysis Tab -->
+                    <div class="tab-pane fade" id="ai-analysis" role="tabpanel" aria-labelledby="ai-analysis-tab">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">توقعات الذكاء الاصطناعي للسعر</div>
+                                    <div class="card-body">
+                                        <div class="chart-container" id="ai-forecast-chart" style="height: 250px;"></div>
+                                        <div class="mt-3">
+                                            <h6>توقع السعر للأيام القادمة:</h6>
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>اليوم</th>
+                                                        <th>السعر المتوقع</th>
+                                                        <th>الاحتمالية</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>غداً</td>
+                                                        <td>1.1015</td>
+                                                        <td>82%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>بعد غد</td>
+                                                        <td>1.1040</td>
+                                                        <td>76%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>بعد 3 أيام</td>
+                                                        <td>1.1065</td>
+                                                        <td>71%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header">تحليل المشاعر</div>
+                                    <div class="card-body">
+                                        <div id="sentiment-gauge" style="height: 200px;"></div>
+                                        <div class="text-center mt-2">
+                                            <h5>مؤشر المشاعر: <span class="text-success">68 (إيجابي)</span></h5>
+                                            <p>تحليل من 150 مصدر إخباري و4,500 منشور على وسائل التواصل الاجتماعي</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">عوامل مؤثرة</div>
+                                    <div class="card-body">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>العامل</th>
+                                                    <th>التأثير</th>
+                                                    <th>الوزن</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>البيانات الاقتصادية الأمريكية</td>
+                                                    <td><span class="badge bg-success">إيجابي</span></td>
+                                                    <td>35%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>سياسة البنك المركزي الأوروبي</td>
+                                                    <td><span class="badge bg-warning">محايد</span></td>
+                                                    <td>25%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>العوامل الفنية</td>
+                                                    <td><span class="badge bg-success">إيجابي</span></td>
+                                                    <td>20%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>أزمات جيوسياسية</td>
+                                                    <td><span class="badge bg-danger">سلبي</span></td>
+                                                    <td>15%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>تدفقات السوق</td>
+                                                    <td><span class="badge bg-success">إيجابي</span></td>
+                                                    <td>5%</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="text-center">
+                                            <h5>التقييم الإجمالي: <span class="text-success">إيجابي (75%)</span></h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header">الارتباطات الرئيسية</div>
+                                    <div class="card-body correlation-matrix">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>EUR/USD</th>
+                                                    <th>GBP/USD</th>
+                                                    <th>USD/JPY</th>
+                                                    <th>XAU/USD</th>
+                                                    <th>SPX500</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th>EUR/USD</th>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 1.0);">1.00</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 0.85);">0.85</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(220, 53, 69, 0.72);">-0.72</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 0.65);">0.65</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 0.12);">0.12</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>GBP/USD</th>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 0.85);">0.85</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 1.0);">1.00</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(220, 53, 69, 0.64);">-0.64</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 0.58);">0.58</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 0.18);">0.18</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>USD/JPY</th>
+                                                    <td class="heatmap-cell" style="background-color: rgba(220, 53, 69, 0.72);">-0.72</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(220, 53, 69, 0.64);">-0.64</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 1.0);">1.00</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(220, 53, 69, 0.42);">-0.42</td>
+                                                    <td class="heatmap-cell" style="background-color: rgba(0, 123, 255, 0.32);">0.32</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Market Strategy & Signals -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">استراتيجيات السوق النشطة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>الاستراتيجية</th>
+                                        <th>الإشارة</th>
+                                        <th>القوة</th>
+                                        <th>معدل النجاح</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>تقاطع المتوسطات المتحركة</td>
+                                        <td><span class="badge bg-success">شراء</span></td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" style="width: 85%"></div>
+                                            </div>
+                                        </td>
+                                        <td>92%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>مؤشر RSI</td>
+                                        <td><span class="badge bg-warning">محايد</span></td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-warning" style="width: 55%"></div>
+                                            </div>
+                                        </td>
+                                        <td>87%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>حزم بولنجر</td>
+                                        <td><span class="badge bg-warning">محايد</span></td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-warning" style="width: 50%"></div>
+                                            </div>
+                                        </td>
+                                        <td>85%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>نظام إيشيموكو</td>
+                                        <td><span class="badge bg-success">شراء</span></td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" style="width: 75%"></div>
+                                            </div>
+                                        </td>
+                                        <td>90%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>استراتيجية القناة السعرية</td>
+                                        <td><span class="badge bg-success">شراء</span></td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" style="width: 80%"></div>
+                                            </div>
+                                        </td>
+                                        <td>88%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">إشارات عالية الدقة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>الزوج</th>
+                                        <th>النوع</th>
+                                        <th>الدخول</th>
+                                        <th>الهدف</th>
+                                        <th>الدقة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>EUR/USD</td>
+                                        <td><span class="badge bg-success">شراء</span></td>
+                                        <td>1.0975</td>
+                                        <td>1.1050</td>
+                                        <td>94%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>GBP/JPY</td>
+                                        <td><span class="badge bg-danger">بيع</span></td>
+                                        <td>192.65</td>
+                                        <td>191.50</td>
+                                        <td>92%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>USD/CAD</td>
+                                        <td><span class="badge bg-success">شراء</span></td>
+                                        <td>1.3650</td>
+                                        <td>1.3720</td>
+                                        <td>91%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>XAU/USD</td>
+                                        <td><span class="badge bg-success">شراء</span></td>
+                                        <td>2328.50</td>
+                                        <td>2355.00</td>
+                                        <td>93%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>USD/JPY</td>
+                                        <td><span class="badge bg-success">شراء</span></td>
+                                        <td>151.85</td>
+                                        <td>152.50</td>
+                                        <td>90%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // مخطط السعر الرئيسي
+        var mainChartOptions = {
+            series: [{
+                name: 'EUR/USD',
+                data: [
+                    [1617192000000, 1.0970, 1.0990, 1.0950, 1.0986],
+                    [1617195600000, 1.0986, 1.1000, 1.0975, 1.0995],
+                    [1617199200000, 1.0995, 1.1010, 1.0980, 1.0985],
+                    [1617202800000, 1.0985, 1.0990, 1.0965, 1.0975],
+                    [1617206400000, 1.0975, 1.0980, 1.0960, 1.0978],
+                    [1617210000000, 1.0978, 1.0995, 1.0970, 1.0986]
+                ]
+            }],
+            chart: {
+                type: 'candlestick',
+                height: 400,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                }
+            },
+            title: {
+                text: 'EUR/USD',
+                align: 'left'
+            },
+            xaxis: {
+                type: 'datetime'
+            },
+            yaxis: {
+                tooltip: {
+                    enabled: true
+                }
+            }
+        };
+
+        var mainChart = new ApexCharts(document.querySelector("#main-chart"), mainChartOptions);
+        mainChart.render();
+
+        // مخطط RSI
+        var rsiChartOptions = {
+            series: [{
+                name: 'RSI',
+                data: [65, 62, 58, 54, 59, 58.6]
+            }],
+            chart: {
+                type: 'line',
+                height: 200,
+                toolbar: {
+                    show: false
+                }
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 2
+            },
+            colors: ['#0d6efd'],
+            xaxis: {
+                categories: ['15:00', '15:05', '15:10', '15:15', '15:20', '15:25'],
+                labels: {
+                    show: false
+                }
+            },
+            yaxis: {
+                min: 0,
+                max: 100,
+                tickAmount: 3,
+                labels: {
+                    formatter: function(val) {
+                        return val.toFixed(0);
+                    }
+                }
+            },
+            annotations: {
+                yaxis: [
+                    {
+                        y: 70,
+                        borderColor: '#dc3545',
+                        label: {
+                            text: 'ذروة شراء',
+                            style: {
+                                color: '#fff',
+                                background: '#dc3545'
+                            }
+                        }
+                    },
+                    {
+                        y: 30,
+                        borderColor: '#198754',
+                        label: {
+                            text: 'ذروة بيع',
+                            style: {
+                                color: '#fff',
+                                background: '#198754'
+                            }
+                        }
+                    }
+                ]
+            }
+        };
+
+        var rsiChart = new ApexCharts(document.querySelector("#rsi-chart"), rsiChartOptions);
+        rsiChart.render();
+
+        // مخطط MACD
+        var macdChartOptions = {
+            series: [{
+                name: 'MACD',
+                type: 'line',
+                data: [0.0010, 0.0015, 0.0018, 0.0022, 0.0023, 0.0024]
+            }, {
+                name: 'Signal',
+                type: 'line',
+                data: [0.0018, 0.0017, 0.0016, 0.0014, 0.0013, 0.0012]
+            }, {
+                name: 'Histogram',
+                type: 'bar',
+                data: [-0.0008, -0.0002, 0.0002, 0.0008, 0.0010, 0.0012]
+            }],
+            chart: {
+                height: 200,
+                type: 'line',
+                toolbar: {
+                    show: false
+                }
+            },
+            stroke: {
+                width: [2, 2, 0],
+                curve: 'smooth'
+            },
+            colors: ['#0d6efd', '#dc3545', '#198754'],
+            xaxis: {
+                categories: ['15:00', '15:05', '15:10', '15:15', '15:20', '15:25'],
+                labels: {
+                    show: false
+                }
+            },
+            yaxis: {
+                tickAmount: 3,
+                labels: {
+                    formatter: function(val) {
+                        return val.toFixed(4);
+                    }
+                }
+            },
+            legend: {
+                show: false
+            }
+        };
+
+        var macdChart = new ApexCharts(document.querySelector("#macd-chart"), macdChartOptions);
+        macdChart.render();
+
+        // مخطط Stochastic
+        var stochChartOptions = {
+            series: [{
+                name: '%K',
+                data: [52, 56, 58, 62, 64, 65.2]
+            }, {
+                name: '%D',
+                data: [48, 50, 53, 55, 57, 58.7]
+            }],
+            chart: {
+                height: 200,
+                type: 'line',
+                toolbar: {
+                    show: false
+                }
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 2
+            },
+            colors: ['#0d6efd', '#dc3545'],
+            xaxis: {
+                categories: ['15:00', '15:05', '15:10', '15:15', '15:20', '15:25'],
+                labels: {
+                    show: false
+                }
+            },
+            yaxis: {
+                min: 0,
+                max: 100,
+                tickAmount: 3,
+                labels: {
+                    formatter: function(val) {
+                        return val.toFixed(0);
+                    }
+                }
+            },
+            annotations: {
+                yaxis: [
+                    {
+                        y: 80,
+                        borderColor: '#dc3545',
+                        label: {
+                            text: 'ذروة شراء',
+                            style: {
+                                color: '#fff',
+                                background: '#dc3545'
+                            }
+                        }
+                    },
+                    {
+                        y: 20,
+                        borderColor: '#198754',
+                        label: {
+                            text: 'ذروة بيع',
+                            style: {
+                                color: '#fff',
+                                background: '#198754'
+                            }
+                        }
+                    }
+                ]
+            }
+        };
+
+        var stochChart = new ApexCharts(document.querySelector("#stoch-chart"), stochChartOptions);
+        stochChart.render();
+
+        // مخطط Bollinger Bands
+        var bbChartOptions = {
+            series: [{
+                name: 'السعر',
+                type: 'line',
+                data: [1.0970, 1.0986, 1.0995, 1.0985, 1.0975, 1.0986]
+            }, {
+                name: 'الحزمة العلوية',
+                type: 'line',
+                data: [1.1010, 1.1015, 1.1020, 1.1025, 1.1022, 1.1025]
+            }, {
+                name: 'المتوسط',
+                type: 'line',
+                data: [1.0960, 1.0965, 1.0970, 1.0975, 1.0972, 1.0975]
+            }, {
+                name: 'الحزمة السفلية',
+                type: 'line',
+                data: [1.0910, 1.0915, 1.0920, 1.0925, 1.0922, 1.0925]
+            }],
+            chart: {
+                height: 200,
+                type: 'line',
+                toolbar: {
+                    show: false
+                }
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 2
+            },
+            colors: ['#0d6efd', '#dc3545', '#6c757d', '#198754'],
+            xaxis: {
+                categories: ['15:00', '15:05', '15:10', '15:15', '15:20', '15:25'],
+                labels: {
+                    show: false
+                }
+            },
+            yaxis: {
+                tickAmount: 3,
+                labels: {
+                    formatter: function(val) {
+                        return val.toFixed(4);
+                    }
+                }
+            },
+            legend: {
+                show: false
+            }
+        };
+
+        var bbChart = new ApexCharts(document.querySelector("#bb-chart"), bbChartOptions);
+        bbChart.render();
+
+        // مخطط توقعات الذكاء الاصطناعي
+        var aiForecastOptions = {
+            series: [{
+                name: 'السعر الفعلي',
+                data: [1.0950, 1.0965, 1.0975, 1.0986]
+            }, {
+                name: 'التوقع',
+                data: [1.0986, 1.1015, 1.1040, 1.1065]
+            }],
+            chart: {
+                height: 250,
+                type: 'line',
+                toolbar: {
+                    show: false
+                }
+            },
+            stroke: {
+                curve: 'smooth',
+                width: [2, 2],
+                dashArray: [0, 3]
+            },
+            colors: ['#0d6efd', '#198754'],
+            xaxis: {
+                categories: ['اليوم', 'غداً', 'بعد غد', 'بعد 3 أيام'],
+            },
+            legend: {
+                position: 'top'
+            }
+        };
+
+        var aiForecastChart = new ApexCharts(document.querySelector("#ai-forecast-chart"), aiForecastOptions);
+        aiForecastChart.render();
+
+        // مخطط مقياس المشاعر
+        var sentimentGaugeOptions = {
+            series: [68],
+            chart: {
+                height: 200,
+                type: 'radialBar',
+            },
+            plotOptions: {
+                radialBar: {
+                    startAngle: -90,
+                    endAngle: 90,
+                    track: {
+                        background: "#e7e7e7",
+                        strokeWidth: '97%',
+                        margin: 5,
+                        dropShadow: {
+                            enabled: true,
+                            top: 2,
+                            left: 0,
+                            color: '#999',
+                            opacity: 1,
+                            blur: 2
+                        }
+                    },
+                    dataLabels: {
+                        name: {
+                            show: false
+                        },
+                        value: {
+                            offsetY: -2,
+                            fontSize: '22px'
+                        }
+                    }
+                }
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'light',
+                    type: 'horizontal',
+                    shadeIntensity: 0.5,
+                    gradientToColors: ['#198754'],
+                    inverseColors: false,
+                    opacityFrom: 1,
+                    opacityTo: 1,
+                    stops: [0, 100]
+                }
+            },
+            labels: ['المشاعر'],
+        };
+
+        var sentimentGauge = new ApexCharts(document.querySelector("#sentiment-gauge"), sentimentGaugeOptions);
+        sentimentGauge.render();
+
+        // أحداث مستمعي الأزرار
+        document.querySelectorAll('.chart-type').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                document.querySelectorAll('.chart-type').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                mainChart.updateOptions({
+                    chart: {
+                        type: type
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('.time-range').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.time-range').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                // يمكن هنا تحديث البيانات بناءً على النطاق الزمني المحدد
+            });
+        });
+
+        document.getElementById('refresh-data').addEventListener('click', function() {
+            // يمكن هنا تحديث البيانات
+            alert('جاري تحديث البيانات...');
+        });
+
+        document.getElementById('export-data').addEventListener('click', function() {
+            // يمكن هنا تصدير البيانات
+            alert('جاري تصدير البيانات...');
+        });
+
+        document.getElementById('currency-search').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            document.querySelectorAll('#currency-list .list-group-item').forEach(function(item) {
+                const currency = item.getAttribute('data-currency').toLowerCase();
+                if (currency.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        document.getElementById('refresh-currencies').addEventListener('click', function() {
+            // يمكن هنا تحديث قائمة العملات
+            alert('جاري تحديث قائمة العملات...');
+        });
+
+        document.querySelectorAll('#currency-list .list-group-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('#currency-list .list-group-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                const currency = this.getAttribute('data-currency');
+                // يمكن هنا تحديث البيانات بناءً على العملة المحددة
+                document.querySelector('.price-value').textContent = '1.0986';  // مثال
+                mainChart.updateOptions({
+                    title: {
+                        text: currency
+                    }
+                });
+            });
+        });
+
+        // تحديث الإشارات في الوقت الحقيقي (محاكاة)
+        setInterval(function() {
+            // تحديث قيم عشوائية للمحاكاة
+            const volatilityBar = document.getElementById('volatility-bar');
+            const newVolatility = Math.floor(Math.random() * 30) + 50;
+            volatilityBar.style.width = newVolatility + '%';
+            volatilityBar.textContent = newVolatility + '%';
+            
+            const trendStrength = document.getElementById('trend-strength');
+            const newTrend = Math.floor(Math.random() * 20) + 70;
+            trendStrength.style.width = newTrend + '%';
+            trendStrength.textContent = newTrend + '%';
+        }, 10000);  // كل 10 ثوانٍ
+    });
+</script>
+{% endblock %}

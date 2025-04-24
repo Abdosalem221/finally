@@ -1,0 +1,378 @@
+/* 
+ * Custom CSS for Trading Signals Platform
+ * Extends the Bootstrap dark theme with custom styles
+ */
+
+/* General Styling */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Card Styling */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card .card-header {
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(to right, #f8f9fa, #ffffff);
+    border-bottom: none;
+}
+
+.card-header {
+    font-weight: 500;
+}
+
+/* Dashboard Stats Cards */
+.card .display-4 {
+    font-size: 2.5rem;
+    font-weight: 500;
+}
+
+/* Table Styling */
+.table td, .table th {
+    vertical-align: middle;
+}
+
+/* Signal Type Badges */
+.badge.bg-success, .badge.bg-danger {
+    font-weight: 500;
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Chart Containers */
+.chart-container {
+    position: relative;
+    min-height: 350px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.chart-container.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chart-container.loading::before {
+    content: 'Loading...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+/* Smart UI Styles */
+.smart-filter {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.smart-filter select,
+.smart-filter input {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+}
+
+.smart-filter select:focus,
+.smart-filter input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.auto-refresh-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+}
+
+.smart-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.smart-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stats-label {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+#alerts-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 350px;
+}
+
+.alert {
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+
+/* Watchlist Styling */
+#watchlist-body td {
+    padding: 0.5rem 0.75rem;
+}
+
+/* Alert List Styling */
+#alerts-list .list-group-item {
+    padding: 0.75rem 1rem;
+}
+
+/* Progress Bar Styling */
+.progress {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+}
+
+/* Settings Page Styling */
+#settings-tabs .list-group-item {
+    border-radius: 0;
+    border-left: 3px solid transparent;
+}
+
+#settings-tabs .list-group-item.active {
+    border-left: 3px solid var(--bs-primary);
+}
+
+.form-range::-webkit-slider-thumb {
+    background: var(--bs-primary);
+}
+
+.form-range::-moz-range-thumb {
+    background: var(--bs-primary);
+}
+
+.form-range::-ms-thumb {
+    background: var(--bs-primary);
+}
+
+/* Analytics Page Styling */
+#currency-chart, #signal-performance-chart {
+    min-height: 300px;
+}
+
+.currency-selector {
+    padding: 0.5rem 0.75rem;
+}
+
+.currency-selector.active {
+    border-left: 3px solid var(--bs-primary);
+}
+
+/* Signal Display Styling */
+#signal-result {
+    transition: all 0.3s ease;
+}
+
+#signal-type {
+    font-weight: 600;
+}
+
+#signal-confidence {
+    font-weight: 600;
+}
+
+/* Alerts Page Styling */
+.alert-row td {
+    padding: 0.75rem;
+}
+
+/* Signal Trading View */
+.trading-view-container {
+    width: 100%;
+    height: 500px;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+/* Form Controls */
+.form-control, .form-select {
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-gray-700);
+    color: var(--bs-body-color);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Tooltip Styling */
+.tooltip {
+    opacity: 0.9;
+}
+
+.tooltip .tooltip-inner {
+    max-width: 200px;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* Notification Badge for Alerts */
+.navbar .nav-item .badge-alert {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    font-size: 0.65rem;
+    padding: 0.25em 0.4em;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    vertical-align: text-bottom;
+    border: 0.2em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border .75s linear infinite;
+}
+
+/* Signal Strength Indicator */
+.signal-strength {
+    height: 8px;
+    width: 100%;
+    background-color: var(--bs-gray-700);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-top: 0.25rem;
+}
+
+.signal-strength-bar {
+    height: 100%;
+    border-radius: 0.5rem;
+    transition: width 0.5s ease;
+}
+
+/* AI Prediction Result Box */
+.ai-prediction-box {
+    border: 1px solid var(--bs-gray-700);
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.ai-prediction-box .prediction-value {
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+/* Custom Switch Toggle */
+.custom-switch .form-check-input {
+    height: 1.5rem;
+    width: 3rem;
+}
+
+.custom-switch .form-check-input:checked {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .card .display-4 {
+        font-size: 2rem;
+    }
+
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+
+    .chart-container {
+        height: 300px;
+    }
+}
+.loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, #4CAF50, #2196F3);
+    animation: loading 1.5s infinite;
+    z-index: 9999;
+}
+
+@keyframes loading {
+    0% { width: 0; }
+    50% { width: 50%; }
+    100% { width: 100%; }
+}
+
+.data-loading {
+    opacity: 0.7;
+    pointer-events: none;
+    position: relative;
+}
+
+.data-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: repl-nix-workspace
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.11
+Requires-Dist: flask-sqlalchemy>=3.1.1
+Requires-Dist: flask>=3.1.0
