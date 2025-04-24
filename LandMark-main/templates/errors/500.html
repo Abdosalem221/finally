@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="error-container">
+    <h1>عذراً! حدث خطأ في النظام</h1>
+    <p>نحن نعمل على حل المشكلة. يرجى المحاولة مرة أخرى لاحقاً.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">العودة للصفحة الرئيسية</a>
+</div>
+{% endblock %}

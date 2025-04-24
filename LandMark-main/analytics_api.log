@@ -1,0 +1,20 @@
+2025-04-24 10:49:09,547 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.128.39:5000
+2025-04-24 10:49:09,547 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-04-24 10:49:10,857 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:49:10] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:49:41,953 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:49:41] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:49:49,929 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.128.39:5000
+2025-04-24 10:49:49,929 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-04-24 10:49:50,374 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:49:50] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:49:50,646 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:49:50] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:50:10,931 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:50:10] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:50:59,422 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:50:59] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:51:19,487 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:51:19] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:51:19,713 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:51:19] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-04-24 10:51:33,838 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:51:33] "[33mGET / HTTP/1.1[0m" 404 -
+2025-04-24 10:52:55,752 - werkzeug - INFO - 172.31.128.39 - - [24/Apr/2025 10:52:55] "[33mGET / HTTP/1.1[0m" 404 -

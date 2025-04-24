@@ -1,0 +1,914 @@
+{% extends "layout.html" %}
+
+{% block title %}High Precision Signals (90-95% Accuracy){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- رأس الصفحة -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white border-0">
+                <div class="card-body">
+                    <h2><i class="fas fa-bullseye"></i> الإشارات عالية الدقة</h2>
+                    <p class="lead mb-0">إشارات متقدمة مع تحليل عميق ودقة عالية</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أدوات التحليل -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">تحليل السوق</h5>
+                    <div class="mb-3">
+                        <label class="form-label">اختر زوج العملات</label>
+                        <select class="form-select" id="currency-pair">
+                            <option value="">اختر زوج العملات...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الإطار الزمني</label>
+                        <select class="form-select" id="timeframe">
+                            <option value="M5">5 دقائق</option>
+                            <option value="M15">15 دقيقة</option>
+                            <option value="H1">ساعة</option>
+                            <option value="H4">4 ساعات</option>
+                            <option value="D1">يومي</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary w-100" id="analyze-btn">
+                        <i class="fas fa-search"></i> تحليل
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">نتائج التحليل المتقدم</h5>
+                    <div id="analysis-result">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">قوة الاتجاه</label>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">مستوى التشبع</label>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإشارات النشطة -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">الإشارات النشطة</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary active">الكل</button>
+                            <button class="btn btn-outline-primary">شراء</button>
+                            <button class="btn btn-outline-primary">بيع</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>العملة</th>
+                                    <th>النوع</th>
+                                    <th>السعر</th>
+                                    <th>الهدف</th>
+                                    <th>وقف الخسارة</th>
+                                    <th>الدقة</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="active-signals">
+                                <!-- سيتم ملؤها بواسطة JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/signals_chart.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load recent high precision signals - adapt to populate #signals-table
+        loadRecentSignals();
+
+        // Load active verifications -  No change needed if it populates a different section
+        loadActiveVerifications();
+
+        // Form submission handler -  No change needed if it populates a different section
+        document.getElementById('generateSignalForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateSignal();
+        });
+
+        // Refresh buttons handlers - No change needed
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            // Clear previous signal results
+            document.getElementById('signals-chart').innerHTML = ''; //clear chart
+            document.getElementById('signals-table').innerHTML = ''; //clear table
+
+        });
+
+        document.getElementById('refreshSignalsBtn').addEventListener('click', function() {
+            loadRecentSignals();
+        });
+
+        document.getElementById('refreshVerificationBtn').addEventListener('click', function() {
+            loadActiveVerifications();
+        });
+    });
+
+    function generateSignal() {
+        // Show loading and result container - Adaptation needed depending on new structure
+        document.getElementById('active-signals').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Generating high precision signal... Please wait while we analyze the market and verify the signal in real-time.</p></div>';
+        // Get form values
+        const currencyPair = document.getElementById('currencyPair').value;
+        const timeframe = document.getElementById('timeframe').value;
+        const strategy = document.getElementById('strategy').value;
+        const enhancements = document.getElementById('enhancements').value;
+        const verification = document.getElementById('verification').value === 'true';
+        const signalType = document.getElementById('signalType').value;
+
+        // Simulate API call (replace with actual API call)
+        setTimeout(() => {
+            // Simulate signal generation
+            const signalData = simulateSignalGeneration(currencyPair, timeframe, strategy, enhancements, verification, signalType);
+
+            // Display the signal
+            displayGeneratedSignal(signalData);
+
+            // Hide loading, show result
+
+            // Refresh the signals list
+            loadRecentSignals();
+
+            // If verification is enabled, refresh active verifications
+            if (verification) {
+                setTimeout(() => {
+                    loadActiveVerifications();
+                }, 1000);
+            }
+        }, 3000); // Simulate 3 second delay for processing
+    }
+
+    function displayGeneratedSignal(signal) {
+        // Adapt to update the chart and/or table instead of the previous HTML structure
+        // Example:  Append to #signals-table or update #signals-chart data
+        let tableRow = document.createElement('tr');
+        tableRow.innerHTML = `<td>${signal.currency_pair}</td><td>${signal.signal_type}</td><td>${signal.entry_price}</td><td>${signal.take_profit}</td><td>${signal.stop_loss}</td><td>${(signal.success_probability * 100).toFixed(1)}%</td><td>Pending</td><td><button class="btn btn-sm btn-info" onclick="showSignalDetails('${signal.id}')">تفاصيل</button></td>`;
+        document.getElementById('active-signals').innerHTML = ''; //clear table before appending
+        document.getElementById('active-signals').appendChild(tableRow);
+
+    }
+
+    function loadRecentSignals() {
+        // Simulate API call to get recent signals
+        setTimeout(() => {
+            const signals = simulateRecentSignals();
+            displayRecentSignals(signals);
+        }, 500);
+    }
+
+    function displayRecentSignals(signals) {
+        // Adapt to populate #signals-table instead of the previous table
+        let tableHtml = '';
+        signals.forEach(signal => {
+            tableHtml += `<tr><td>${signal.currency_pair}</td><td>${signal.signal_type}</td><td>${signal.entry_price}</td><td>${signal.take_profit}</td><td>${signal.stop_loss}</td><td>${(signal.success_probability * 100).toFixed(1)}%</td><td>${signal.status}</td><td><button class="btn btn-sm btn-info" onclick="showSignalDetails('${signal.id}')">تفاصيل</button></td></tr>`;
+        });
+        document.getElementById('active-signals').innerHTML = tableHtml;
+    }
+
+    function loadActiveVerifications() {
+        // Simulate API call to get active verifications
+        setTimeout(() => {
+            const verifications = simulateActiveVerifications();
+            displayActiveVerifications(verifications);
+        }, 500);
+    }
+
+    function displayActiveVerifications(verifications) {
+        if (!verifications || verifications.length === 0) {
+            document.getElementById('noActiveVerificationsMsg').style.display = 'block';
+            document.getElementById('verificationsList').innerHTML = '';
+            return;
+        }
+
+        document.getElementById('noActiveVerificationsMsg').style.display = 'none';
+
+        let verificationsHtml = '';
+        verifications.forEach(verification => {
+            const signalTypeClass = verification.signal.signal_type === 'BUY' ? 'success' : 'danger';
+            const progressValue = verification.verification_score * 100;
+            const thresholdValue = verification.threshold * 100;
+
+            verificationsHtml += `
+                <div class="card bg-dark border-secondary mb-3">
+                    <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                        <span>
+                            <span class="badge bg-${signalTypeClass} me-2">${verification.signal.signal_type}</span>
+                            ${verification.signal.currency_pair} @ ${verification.signal.entry_price}
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="bi bi-clock"></i> ${verification.elapsed_time} min
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>Verification Progress</span>
+                                <span>${verification.checkpoints_passed}/${verification.checkpoints_total} checkpoints</span>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar bg-primary" role="progressbar"
+                                    style="width: ${(verification.checkpoints_passed / verification.checkpoints_total * 100)}%;">
+                                    ${(verification.checkpoints_passed / verification.checkpoints_total * 100).toFixed(0)}%
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>Verification Score</span>
+                                <span>${progressValue.toFixed(1)}% / Threshold: ${thresholdValue.toFixed(1)}%</span>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar ${progressValue >= thresholdValue ? 'bg-success' : 'bg-warning'}"
+                                    role="progressbar" style="width: ${progressValue}%;">
+                                    ${progressValue.toFixed(1)}%
+                                </div>
+                                <div class="progress-bar bg-transparent" role="progressbar"
+                                    style="width: ${Math.max(0, thresholdValue - progressValue)}%; border-right: 2px dashed yellow; height: 100%;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between small">
+                            <span>Price action: ${(verification.price_action_score * 100).toFixed(0)}%</span>
+                            <span>Volume: ${(verification.volume_score * 100).toFixed(0)}%</span>
+                            <span>Order flow: ${(verification.order_flow_score * 100).toFixed(0)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('verificationsList').innerHTML = verificationsHtml;
+    }
+
+    function showSignalDetails(signalId) {
+        // In a real implementation, fetch signal details by ID
+        const signal = simulateSignalDetails(signalId);
+
+        if (!signal) return;
+
+        // Create modal content
+        let modalHtml = `
+            <div class="alert alert-${signal.signal_type === 'BUY' ? 'success' : 'danger'} mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="h1 rounded p-2 me-3 ${signal.signal_type === 'BUY' ? 'bg-success' : 'bg-danger'}">
+                        <i class="bi ${signal.signal_type === 'BUY' ? 'bi-arrow-up-circle' : 'bi-arrow-down-circle'}"></i>
+                    </div>
+                    <div>
+                        <h4 class="alert-heading">${signal.signal_type} ${signal.currency_pair} @ ${signal.entry_price}</h4>
+                        <p class="mb-0">Generated: ${new Date(signal.timestamp).toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Signal Parameters</h5>
+                    <ul class="list-group list-group-flush bg-transparent mb-4">
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            <strong>Entry Price:</strong> <span>${signal.entry_price}</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            <strong>Take Profit:</strong> <span class="text-success">${signal.take_profit}</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            <strong>Stop Loss:</strong> <span class="text-danger">${signal.stop_loss}</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            <strong>Risk-Reward Ratio:</strong> <span>${signal.risk_reward_ratio.toFixed(2)}</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            <strong>Timeframe:</strong> <span>${signal.timeframe}</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            <strong>Success Probability:</strong> <span>${(signal.success_probability * 100).toFixed(1)}%</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Strategy Information</h5>
+                    <div class="card bg-dark border-light mb-4">
+                        <div class="card-body">
+                            <h6>${signal.strategy_name}</h6>
+                            <p>${signal.strategy_description}</p>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Category: ${signal.strategy_category}</small>
+                                <small class="text-muted">Success Rate: ${(signal.strategy_success_rate * 100).toFixed(1)}%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5>Applied Enhancements</h5>
+            <div class="row mb-4">
+                ${signal.enhancements.map(enhancement => `
+                    <div class="col-md-6 mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <div>
+                                <strong>${enhancement.name}</strong>
+                                <div><small class="text-muted">${enhancement.description}</small></div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            ${signal.verification_results ? `
+            <h5>Verification Results</h5>
+            <div class="card bg-dark border-info mb-3">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Checkpoint</th>
+                                    <th>Price</th>
+                                    <th>Movement</th>
+                                    <th>Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(signal.verification_results).map(([checkpoint, result]) => `
+                                <tr>
+                                    <td>${checkpoint} min</td>
+                                    <td>${result.price}</td>
+                                    <td class="${parseFloat(result.price_movement) >= 0 ? 'text-success' : 'text-danger'}">
+                                        ${parseFloat(result.price_movement_percentage).toFixed(4)}%
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar ${result.score >= result.threshold ? 'bg-success' : 'bg-warning'}"
+                                                role="progressbar" style="width: ${(result.score * 100)}%;">
+                                                ${(result.score * 100).toFixed(1)}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-${result.status === 'verified' ? 'success' : 'danger'}">
+                                            ${result.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            ${signal.result ? `
+            <h5>Signal Result</h5>
+            <div class="card bg-dark border-${signal.result === 'WIN' ? 'success' : 'danger'} mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="h1 rounded p-2 me-3 bg-${signal.result === 'WIN' ? 'success' : 'danger'}">
+                            <i class="bi ${signal.result === 'WIN' ? 'bi-trophy' : 'bi-x-circle'}"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title">${signal.result === 'WIN' ? 'SUCCESS' : 'LOSS'}</h5>
+                            <p class="card-text">
+                                ${signal.result_description}
+                            </p>
+                            <small class="text-muted">
+                                Result confirmed: ${new Date(signal.result_timestamp).toLocaleString()}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+        `;
+
+        // Update modal content
+        document.getElementById('signalDetailsModalLabel').textContent = `Signal Details: ${signal.currency_pair} ${signal.signal_type}`;
+        document.getElementById('signalDetailsModalBody').innerHTML = modalHtml;
+
+        // Show modal
+        new bootstrap.Modal(document.getElementById('signalDetailsModal')).show();
+    }
+
+    // Simulation functions for demo purposes
+    // In a real implementation, these would be API calls to the backend
+
+    function simulateSignalGeneration(currencyPair, timeframe, strategy, enhancementsLevel, verification, signalType) {
+        // Simulate signal generation based on parameters
+        const isPositive = ['any', 'buy'].includes(signalType) ? (Math.random() > 0.3) : false;
+        const isBuy = isPositive || (signalType === 'buy');
+
+        // Generate a realistic entry price based on currency pair
+        let entryPrice;
+        if (currencyPair === 'EUR/USD') entryPrice = (1.05 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'GBP/USD') entryPrice = (1.25 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'USD/JPY') entryPrice = (140 + Math.random() * 10).toFixed(3);
+        else if (currencyPair === 'AUD/USD') entryPrice = (0.65 + Math.random() * 0.03).toFixed(5);
+        else if (currencyPair === 'USD/CAD') entryPrice = (1.35 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'USD/CHF') entryPrice = (0.90 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'NZD/USD') entryPrice = (0.60 + Math.random() * 0.03).toFixed(5);
+        else entryPrice = (1.0 + Math.random() * 0.1).toFixed(5);
+
+        // Convert entry price to a float for calculations
+        entryPrice = parseFloat(entryPrice);
+
+        // Average pip value for this currency
+        let pipValue;
+        if (currencyPair.includes('JPY')) pipValue = 0.01;
+        else pipValue = 0.0001;
+
+        // Calculate take profit and stop loss
+        let riskPips = 15 + Math.floor(Math.random() * 15); // 15-30 pips for stop loss
+        let rewardPips = Math.floor(riskPips * (1.5 + Math.random())); // 1.5-2.5x risk for reward
+
+        let takeProfit, stopLoss;
+        if (isBuy) {
+            takeProfit = (entryPrice + (rewardPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+            stopLoss = (entryPrice - (riskPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+        } else {
+            takeProfit = (entryPrice - (rewardPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+            stopLoss = (entryPrice + (riskPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+        }
+
+        // Calculate risk-reward ratio
+        const riskRewardRatio = rewardPips / riskPips;
+
+        // Determine enhancement level
+        let enhancementLevel;
+        let numEnhancements;
+        switch (enhancementsLevel) {
+            case 'ultra':
+                enhancementLevel = 0.9 + (Math.random() * 0.1);
+                numEnhancements = 45 + Math.floor(Math.random() * 6); // 45-50
+                break;
+            case 'high':
+                enhancementLevel = 0.7 + (Math.random() * 0.2);
+                numEnhancements = 15 + Math.floor(Math.random() * 6); // 15-20
+                break;
+            case 'standard':
+                enhancementLevel = 0.5 + (Math.random() * 0.2);
+                numEnhancements = 8 + Math.floor(Math.random() * 3); // 8-10
+                break;
+            case 'basic':
+                enhancementLevel = 0.3 + (Math.random() * 0.2);
+                numEnhancements = 3 + Math.floor(Math.random() * 3); // 3-5
+                break;
+            default:
+                enhancementLevel = 0.5;
+                numEnhancements = 10;
+        }
+
+        // Generate random enhancements
+        const allEnhancements = [
+            { name: 'Multi-Timeframe Confluence', description: 'Cross-verification across multiple timeframes (1m to 1d)' },
+            { name: 'Market Regime Detection', description: 'AI-based detection of current market regime for optimized signals' },
+            { name: 'Real-Time Verification', description: 'Live verification of signals before confirmation' },
+            { name: 'Adaptive Take-Profit/Stop-Loss', description: 'Dynamic calculation of optimal TP/SL levels' },
+            { name: 'Correlation Filtering', description: 'Filtering based on correlations between currency pairs' },
+            { name: 'Fractal Timeframe Analysis', description: 'Analysis of market fractals across multiple timeframes' },
+            { name: 'Timeframe Momentum Alignment', description: 'Ensuring momentum indicators align across timeframes' },
+            { name: 'Higher Timeframe Trend Filter', description: 'Filtering signals against higher timeframe trends' },
+            { name: 'Volume Profile Verification', description: 'Verifying signals against volume profile development' },
+            { name: 'Order Flow Verification', description: 'Verifying signals with order flow analysis' },
+            { name: 'Multi-Target Take Profit', description: 'Multiple take profit targets for partial exits' },
+            { name: 'Dynamic Position Sizing', description: 'Adjusting position size based on signal confidence' },
+            { name: 'Harmonic Pattern Detection', description: 'Detecting harmonic price patterns for precise entries' },
+            { name: 'Elliott Wave Analysis', description: 'Applying Elliott Wave principles for trade setups' },
+            { name: 'Volume-Price Divergence', description: 'Detecting divergences between volume and price' },
+            { name: 'Support/Resistance Confluence', description: 'Multiple S/R levels confirming signal zones' },
+            { name: 'Price Action Pattern Verification', description: 'Confirming signals with price action patterns' },
+            { name: 'Volatility-Based Entry Timing', description: 'Optimizing entry timing based on volatility cycles' },
+            { name: 'Market Session Optimization', description: 'Filtering signals based on market session characteristics' },
+            { name: 'Currency Strength Analysis', description: 'Analyzing relative strength of individual currencies' }
+        ];
+
+        // Shuffle and select enhancements
+        const shuffled = [...allEnhancements].sort(() => 0.5 - Math.random());
+        const selectedEnhancements = shuffled.slice(0, numEnhancements);
+
+        // Calculate success probability based on enhancement level and other factors
+        const baseProbability = 0.85 + (Math.random() * 0.1); // Base 85-95%
+        const enhancementFactor = enhancementLevel * 0.1; // Enhancement boost (up to +10%)
+        const riskRewardFactor = Math.min(0.05, (riskRewardRatio - 1) * 0.02); // RR boost (up to +5%)
+
+        let successProbability = baseProbability + enhancementFactor + riskRewardFactor;
+        successProbability = Math.min(0.95, Math.max(0.85, successProbability)); // Clamp between 85-95%
+
+        // Generate strategy name and details based on selected strategy
+        let strategyName, strategyDescription, strategyCategory;
+        if (strategy === 'auto') {
+            const strategies = [
+                { name: 'Swing Trading System', description: 'Combines multiple indicators for swing trading in trend direction', category: 'combination' },
+                { name: 'Ichimoku Cloud Strategy', description: 'Comprehensive trend trading system using Ichimoku Cloud components', category: 'trend_following' },
+                { name: 'Harmonic Pattern System', description: 'Identifies harmonic price patterns for precise entry points', category: 'pattern_recognition' },
+                { name: 'SuperTrend Strategy', description: 'Combines ATR and trend to generate signals with trailing stop loss', category: 'trend_following' },
+                { name: 'Order Flow Strategy', description: 'Analyzes order flow and market delta for high-probability entries', category: 'order_flow' }
+            ];
+            const selectedStrategy = strategies[Math.floor(Math.random() * strategies.length)];
+            strategyName = selectedStrategy.name;
+            strategyDescription = selectedStrategy.description;
+            strategyCategory = selectedStrategy.category;
+        } else {
+            const strategyMap = {
+                'swing_trading_system': {
+                    name: 'Swing Trading System',
+                    description: 'Combines multiple indicators for swing trading in trend direction',
+                    category: 'combination'
+                },
+                'ichimoku_cloud_strategy': {
+                    name: 'Ichimoku Cloud Strategy',
+                    description: 'Comprehensive trend trading system using Ichimoku Cloud components',
+                    category: 'trend_following'
+                },
+                'harmonic_pattern_system': {
+                    name: 'Harmonic Pattern System',
+                    description: 'Identifies harmonic price patterns for precise entry points',
+                    category: 'pattern_recognition'
+                },
+                'supertrend_strategy': {
+                    name: 'SuperTrend Strategy',
+                    description: 'Combines ATR and trend to generate signals with trailing stop loss',
+                    category: 'trend_following'
+                },
+                'order_flow_strategy': {
+                    name: 'Order Flow Strategy',
+                    description: 'Analyzes order flow and market delta for high-probability entries',
+                    category: 'order_flow'
+                }
+            };
+            const selectedStrategy = strategyMap[strategy] || strategyMap['swing_trading_system'];
+            strategyName = selectedStrategy.name;
+            strategyDescription = selectedStrategy.description;
+            strategyCategory = selectedStrategy.category;
+        }
+
+        // Verification ID if verification is enabled
+        const verificationId = verification ? `verify_${Date.now()}_${Math.floor(Math.random() * 1000)}` : null;
+
+        // Return the signal data
+        return {
+            id: `sig_${Date.now()}`,
+            currency_pair: currencyPair,
+            signal_type: isBuy ? 'BUY' : 'SELL',
+            entry_price: entryPrice.toFixed(currencyPair.includes('JPY') ? 3 : 5),
+            take_profit: takeProfit,
+            stop_loss: stopLoss,
+            risk_reward_ratio: riskRewardRatio,
+            timeframe: timeframe,
+            strategy_name: strategyName,
+            strategy_description: strategyDescription,
+            strategy_category: strategyCategory,
+            strategy_success_rate: 0.75 + (Math.random() * 0.1), // 75-85% strategy success rate
+            enhancements: selectedEnhancements,
+            enhancement_level: enhancementLevel,
+            success_probability: successProbability,
+            verification_id: verificationId,
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    function simulateRecentSignals() {
+        // Generate a list of recent signals for the table
+        const numSignals = 5 + Math.floor(Math.random() * 6); // 5-10 signals
+        const signals = [];
+
+        const currencyPairs = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD'];
+        const signalTypes = ['BUY', 'SELL'];
+        const timeframes = ['1m', '5m', '15m', '30m', '1h', '4h', '1d'];
+        const statuses = ['pending', 'completed', 'verified', 'rejected'];
+        const results = ['WIN', 'LOSS', null]; // null for pending
+
+        for (let i = 0; i < numSignals; i++) {
+            const isBuy = Math.random() > 0.5;
+            const currencyPair = currencyPairs[Math.floor(Math.random() * currencyPairs.length)];
+
+            // Generate a realistic entry price based on currency pair
+            let entryPrice;
+            if (currencyPair === 'EUR/USD') entryPrice = (1.05 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'GBP/USD') entryPrice = (1.25 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'USD/JPY') entryPrice = (140 + Math.random() * 10).toFixed(3);
+            else if (currencyPair === 'AUD/USD') entryPrice = (0.65 + Math.random() * 0.03).toFixed(5);
+            else if (currencyPair === 'USD/CAD') entryPrice = (1.35 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'USD/CHF') entryPrice = (0.90 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'NZD/USD') entryPrice = (0.60 + Math.random() * 0.03).toFixed(5);
+            else entryPrice = (1.0 + Math.random() * 0.1).toFixed(5);
+
+            // Average pip value for this currency
+            let pipValue;
+            if (currencyPair.includes('JPY')) pipValue = 0.01;
+            else pipValue = 0.0001;
+
+            // Calculate take profit and stop loss
+            const riskPips = 15 + Math.floor(Math.random() * 15); // 15-30 pips for stop loss
+            const rewardPips = Math.floor(riskPips * (1.5 + Math.random())); // 1.5-2.5x risk for reward
+
+            let takeProfit, stopLoss;
+            if (isBuy) {
+                takeProfit = (parseFloat(entryPrice) + (rewardPips* pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+                stopLoss = (parseFloat(entryPrice) - (riskPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+            } else {
+                takeProfit = (parseFloat(entryPrice) - (rewardPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+                stopLoss = (parseFloat(entryPrice) + (riskPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+            }
+
+            // Generate timestamp (between now and 7 days ago)
+            const timestamp = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
+
+            // Generate status and result
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            let result = null;
+            if (status === 'completed' || status === 'verified') {
+                result = results[Math.floor(Math.random() * (results.length - 1))]; // Either WIN or LOSS
+            }
+
+            signals.push({
+                id: `sig_${Date.now() - i * 1000}`,
+                currency_pair: currencyPair,
+                signal_type: isBuy ? 'BUY' : 'SELL',
+                entry_price: entryPrice,
+                take_profit: takeProfit,
+                stop_loss: stopLoss,
+                timeframe: timeframes[Math.floor(Math.random() * timeframes.length)],
+                timestamp: timestamp,
+                status: status,
+                result: result,
+                success_probability: 0.85 + (Math.random() * 0.1) // 85-95%
+            });
+        }
+
+        // Sort by timestamp, most recent first
+        signals.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        return signals;
+    }
+
+    function simulateActiveVerifications() {
+        // Check if we should simulate any active verifications
+        if (Math.random() > 0.7) return []; // 30% chance of no active verifications
+
+        // Generate a list of active verifications
+        const numVerifications = 1 + Math.floor(Math.random() * 2); // 1-2 verifications
+        const verifications = [];
+
+        const currencyPairs = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD'];
+        const signalTypes = ['BUY', 'SELL'];
+
+        for (let i = 0; i < numVerifications; i++) {
+            const isBuy = Math.random() > 0.5;
+            const currencyPair = currencyPairs[Math.floor(Math.random() * currencyPairs.length)];
+
+            // Generate a realistic entry price based on currency pair
+            let entryPrice;
+            if (currencyPair === 'EUR/USD') entryPrice = (1.05 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'GBP/USD') entryPrice = (1.25 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'USD/JPY') entryPrice = (140 + Math.random() * 10).toFixed(3);
+            else if (currencyPair === 'AUD/USD') entryPrice = (0.65 + Math.random() * 0.03).toFixed(5);
+            else if (currencyPair === 'USD/CAD') entryPrice = (1.35 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'USD/CHF') entryPrice = (0.90 + Math.random() * 0.05).toFixed(5);
+            else if (currencyPair === 'NZD/USD') entryPrice = (0.60 + Math.random() * 0.03).toFixed(5);
+            else entryPrice = (1.0 + Math.random() * 0.1).toFixed(5);
+
+            // Elapsed time: random between 0.5 and 15 minutes
+            const elapsedTime = (0.5 + Math.random() * 14.5).toFixed(1);
+
+            // Generate checkpoints progress
+            const totalCheckpoints = 5;
+            const completedCheckpoints = Math.floor(Math.random() * (totalCheckpoints + 1));
+
+            // Generate verification scores
+            const verificationScore = 0.5 + Math.random() * 0.4; // 50-90%
+            const threshold = 0.55 + Math.random() * 0.1; // 55-65%
+
+            // Component scores
+            const priceActionScore = 0.4 + Math.random() * 0.5; // 40-90%
+            const volumeScore = 0.4 + Math.random() * 0.5; // 40-90%
+            const orderFlowScore = 0.4 + Math.random() * 0.5; // 40-90%
+
+            verifications.push({
+                id: `verify_${Date.now() - i * 1000}`,
+                signal: {
+                    id: `sig_${Date.now() - i * 1000}`,
+                    currency_pair: currencyPair,
+                    signal_type: isBuy ? 'BUY' : 'SELL',
+                    entry_price: entryPrice
+                },
+                elapsed_time: elapsedTime,
+                checkpoints_passed: completedCheckpoints,
+                checkpoints_total: totalCheckpoints,
+                verification_score: verificationScore,
+                threshold: threshold,
+                price_action_score: priceActionScore,
+                volume_score: volumeScore,
+                order_flow_score: orderFlowScore
+            });
+        }
+
+        return verifications;
+    }
+
+    function simulateSignalDetails(signalId) {
+        // In real implementation, fetch signal details by ID
+        // For demo, generate a random signal detail
+
+        const currencyPairs = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD'];
+        const signalTypes = ['BUY', 'SELL'];
+        const timeframes = ['1m', '5m', '15m', '30m', '1h', '4h', '1d'];
+
+        const isBuy = Math.random() > 0.5;
+        const currencyPair = currencyPairs[Math.floor(Math.random() * currencyPairs.length)];
+
+        // Generate a realistic entry price based on currency pair
+        let entryPrice;
+        if (currencyPair === 'EUR/USD') entryPrice = (1.05 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'GBP/USD') entryPrice = (1.25 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'USD/JPY') entryPrice = (140 + Math.random() * 10).toFixed(3);
+        else if (currencyPair === 'AUD/USD') entryPrice = (0.65 + Math.random() * 0.03).toFixed(5);
+        else if (currencyPair === 'USD/CAD') entryPrice = (1.35 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'USD/CHF') entryPrice = (0.90 + Math.random() * 0.05).toFixed(5);
+        else if (currencyPair === 'NZD/USD') entryPrice = (0.60 + Math.random() * 0.03).toFixed(5);
+        else entryPrice = (1.0 + Math.random() * 0.1).toFixed(5);
+
+        // Average pip value for this currency
+        let pipValue;
+        if (currencyPair.includes('JPY')) pipValue = 0.01;
+        else pipValue = 0.0001;
+
+        // Calculate take profit and stop loss
+        const riskPips = 15 + Math.floor(Math.random() * 15); // 15-30 pips for stop loss
+        const rewardPips = Math.floor(riskPips * (1.5 + Math.random())); // 1.5-2.5x risk for reward
+
+        let takeProfit, stopLoss;
+        if (isBuy) {
+            takeProfit = (parseFloat(entryPrice) + (rewardPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+            stopLoss = (parseFloat(entryPrice) - (riskPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+        } else {
+            takeProfit = (parseFloat(entryPrice) - (rewardPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+            stopLoss = (parseFloat(entryPrice) + (riskPips * pipValue)).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+        }
+
+        // Generate timestamp (between now and 7 days ago)
+        const timestamp = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        // Strategy details
+        const strategies = [
+            { name: 'Swing Trading System', description: 'Combines multiple indicators for swing trading in trend direction', category: 'combination' },
+            { name: 'Ichimoku Cloud Strategy', description: 'Comprehensive trend trading system using Ichimoku Cloud components', category: 'trend_following' },
+            { name: 'Harmonic Pattern System', description: 'Identifies harmonic price patterns for precise entry points', category: 'pattern_recognition' },
+            { name: 'SuperTrend Strategy', description: 'Combines ATR and trend to generate signals with trailing stop loss', category: 'trend_following' },
+            { name: 'Order Flow Strategy', description: 'Analyzes order flow and market delta for high-probability entries', category: 'order_flow' }
+        ];
+
+        const strategy = strategies[Math.floor(Math.random() * strategies.length)];
+
+        // Generate random enhancements
+        const allEnhancements = [
+            { name: 'Multi-Timeframe Confluence', description: 'Cross-verification across multiple timeframes (1m to 1d)' },
+            { name: 'Market Regime Detection', description: 'AI-based detection of current market regime for optimized signals' },
+            { name: 'Real-Time Verification', description: 'Live verification of signals before confirmation' },
+            { name: 'Adaptive Take-Profit/Stop-Loss', description: 'Dynamic calculation of optimal TP/SL levels' },
+            { name: 'Correlation Filtering', description: 'Filtering based on correlations between currency pairs' },
+            { name: 'Fractal Timeframe Analysis', description: 'Analysis of market fractals across multiple timeframes' },
+            { name: 'Timeframe Momentum Alignment', description: 'Ensuring momentum indicators align across timeframes' },
+            { name: 'Higher Timeframe Trend Filter', description: 'Filtering signals against higher timeframe trends' },
+            { name: 'Volume Profile Verification', description: 'Verifying signals against volume profile development' },
+            { name: 'Order Flow Verification', description: 'Verifying signals with order flow analysis' }
+        ];
+
+        // Shuffle and select enhancements
+        const shuffled = [...allEnhancements].sort(() => 0.5 - Math.random());
+        const selectedEnhancements = shuffled.slice(0, 5 + Math.floor(Math.random() * 6)); // 5-10 enhancements
+
+        // Generate verification results
+        let verificationResults = null;
+        if (Math.random() > 0.3) { // 70% chance of having verification results
+            verificationResults = {};
+            const checkpoints = [0.5, 1, 3, 5, 10, 15];
+            const numCheckpoints = 2 + Math.floor(Math.random() * 5); // 2-6 checkpoints
+
+            for (let i = 0; i < numCheckpoints; i++) {
+                const checkpoint = checkpoints[i];
+                const score = 0.5 + Math.random() * 0.4; // 50-90%
+                const threshold = 0.55 + Math.random() * 0.05; // 55-60%
+                const status = score >= threshold ? 'verified' : 'rejected';
+
+                const initialPrice = parseFloat(entryPrice);
+                let movement;
+                if (isBuy) {
+                    movement = (Math.random() * 0.002) * (Math.random() > 0.2 ? 1 : -1); // 70% chance of positive movement for BUY
+                } else {
+                    movement = (Math.random() * 0.002) * (Math.random() > 0.2 ? -1 : 1); // 70% chance of negative movement for SELL
+                }
+
+                const price = (initialPrice + movement).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+                const priceMov = (movement).toFixed(currencyPair.includes('JPY') ? 3 : 5);
+                const priceMovPct = (movement / initialPrice * 100).toFixed(6);
+
+                verificationResults[checkpoint] = {
+                    price: price,
+                    price_movement: priceMov,
+                    price_movement_percentage: priceMovPct,
+                    score: score,
+                    threshold: threshold,
+                    status: status
+                };
+            }
+        }
+
+        // Generate result
+        let result = null;
+        let resultDescription = null;
+        let resultTimestamp = null;
+
+        if (Math.random() > 0.4) { // 60% chance of having a result
+            result = Math.random() > 0.3 ? 'WIN' : 'LOSS'; // 70% chance of WIN
+
+            if (result === 'WIN') {
+                if (isBuy) {
+                    resultDescription = `Price reached the take profit level of ${takeProfit} after a strong bullish move.`;
+                } else {
+                    resultDescription = `Price reached the take profit level of ${takeProfit} after a strong bearish move.`;
+                }
+            } else {
+                if (isBuy) {
+                    resultDescription = `Price hit the stop loss level of ${stopLoss} after an unexpected reversal.`;
+                } else {
+                    resultDescription = `Price hit the stop loss level of ${stopLoss} after an unexpected reversal.`;
+                }
+            }
+
+            resultTimestamp = new Date(new Date(timestamp).getTime() + Math.random() * 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        // Calculate risk-reward ratio
+        const riskRewardRatio = rewardPips / riskPips;
+
+        // Return signal details
+        return {
+            id: signalId,
+            currency_pair: currencyPair,
+            signal_type: isBuy ? 'BUY' : 'SELL',
+            entry_price: entryPrice,
+            take_profit: takeProfit,
+            stop_loss: stopLoss,
+            risk_reward_ratio: riskRewardRatio,
+            timeframe: timeframes[Math.floor(Math.random() * timeframes.length)],
+            timestamp: timestamp,
+            strategy_name: strategy.name,
+            strategy_description: strategy.description,
+            strategy_category: strategy.category,
+            strategy_success_rate: 0.75 + (Math.random() * 0.1), // 75-85% strategy success rate
+            enhancements: selectedEnhancements,
+            success_probability: 0.85 + (Math.random() * 0.1), // 85-95%
+            verification_results: verificationResults,
+            result: result,
+            result_description: resultDescription,
+            result_timestamp: resultTimestamp
+        };
+    }
+</script>
+{% endblock %}

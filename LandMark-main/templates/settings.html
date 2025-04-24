@@ -1,0 +1,761 @@
+{% extends "layout.html" %}
+
+{% block title %}Settings - Trading Signals{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <h1 class="mb-3">Settings</h1>
+        
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="list-group mb-4" id="settings-tabs" role="tablist">
+                    <a class="list-group-item list-group-item-action active" id="general-tab" data-bs-toggle="tab" href="#general" role="tab">
+                        <i class="fas fa-cog me-2"></i> General Settings
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="signal-tab" data-bs-toggle="tab" href="#signal" role="tab">
+                        <i class="fas fa-signal me-2"></i> Signal Settings
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="notification-tab" data-bs-toggle="tab" href="#notification" role="tab">
+                        <i class="fas fa-bell me-2"></i> Notification Settings
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="api-tab" data-bs-toggle="tab" href="#api" role="tab">
+                        <i class="fas fa-key me-2"></i> API Configuration
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="ai-tab" data-bs-toggle="tab" href="#ai" role="tab">
+                        <i class="fas fa-brain me-2"></i> AI Settings
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-9">
+                <div class="tab-content" id="settings-content">
+                    <!-- General Settings -->
+                    <div class="tab-pane fade show active" id="general" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">General Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="general-settings-form">
+                                    <div class="mb-3">
+                                        <label class="form-label">Data Fetch Interval (seconds)</label>
+                                        <input type="number" class="form-control" id="data-fetch-interval" value="60" min="10">
+                                        <div class="form-text">How often to fetch new market data (minimum 10 seconds)</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Theme</label>
+                                        <select class="form-select" id="app-theme">
+                                            <option value="dark" selected>Dark Theme</option>
+                                            <option value="light">Light Theme</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Default Chart Timeframe</label>
+                                        <select class="form-select" id="default-timeframe">
+                                            <option value="1d">1 Day</option>
+                                            <option value="7d" selected>7 Days</option>
+                                            <option value="30d">30 Days</option>
+                                            <option value="90d">90 Days</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enable-animations" checked>
+                                        <label class="form-check-label" for="enable-animations">
+                                            Enable Chart Animations
+                                        </label>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save General Settings
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Signal Settings -->
+                    <div class="tab-pane fade" id="signal" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Signal Generation Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="signal-settings-form">
+                                    <div class="mb-3">
+                                        <label class="form-label">Signal Generation Interval (seconds)</label>
+                                        <input type="number" class="form-control" id="signal-interval" value="300" min="60">
+                                        <div class="form-text">How often to generate trading signals (minimum 60 seconds)</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Minimum Confidence Threshold (%)</label>
+                                        <input type="number" class="form-control" id="confidence-threshold" value="75" min="50" max="100">
+                                        <div class="form-text">Minimum confidence level required to generate a signal</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Risk/Reward Ratio</label>
+                                        <select class="form-select" id="risk-reward-ratio">
+                                            <option value="1">1:1</option>
+                                            <option value="1.5">1:1.5</option>
+                                            <option value="2" selected>1:2</option>
+                                            <option value="3">1:3</option>
+                                        </select>
+                                        <div class="form-text">Target risk/reward ratio for generated signals</div>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enable-binary-signals" checked>
+                                        <label class="form-check-label" for="enable-binary-signals">
+                                            Enable Binary Options Signals
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enable-forex-signals" checked>
+                                        <label class="form-check-label" for="enable-forex-signals">
+                                            Enable Forex Signals
+                                        </label>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save Signal Settings
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Strategy Weights</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="strategy-weights-form">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Trend Following</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.8" id="trend-following-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Mean Reversion</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.7" id="mean-reversion-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Breakout</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.9" id="breakout-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Support/Resistance</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.85" id="support-resistance-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Momentum</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.75" id="momentum-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Volatility</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.7" id="volatility-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Pattern Recognition</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.8" id="pattern-recognition-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Oscillator</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.75" id="oscillator-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Divergence</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.8" id="divergence-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Elliott Wave</label>
+                                                <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.7" id="elliott-wave-weight">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0.0</span>
+                                                    <span>0.5</span>
+                                                    <span>1.0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save Strategy Weights
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Settings -->
+                    <div class="tab-pane fade" id="notification" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Notification Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="notification-settings-form">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enable-browser-notifications" checked>
+                                        <label class="form-check-label" for="enable-browser-notifications">
+                                            Enable Browser Notifications
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enable-telegram-notifications" checked>
+                                        <label class="form-check-label" for="enable-telegram-notifications">
+                                            Enable Telegram Notifications
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Telegram API Token</label>
+                                        <input type="text" class="form-control" id="telegram-token" placeholder="Enter your Telegram Bot API Token">
+                                        <div class="form-text">Required for Telegram notifications</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Telegram Chat IDs (comma-separated)</label>
+                                        <input type="text" class="form-control" id="telegram-chat-ids" placeholder="e.g., 123456789,987654321">
+                                        <div class="form-text">IDs of users or groups to receive notifications</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Notification Types</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="notify-signals" checked>
+                                            <label class="form-check-label" for="notify-signals">
+                                                New Trading Signals
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="notify-alerts" checked>
+                                            <label class="form-check-label" for="notify-alerts">
+                                                Price Alerts
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="notify-system" checked>
+                                            <label class="form-check-label" for="notify-system">
+                                                System Notifications
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save Notification Settings
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Configuration -->
+                    <div class="tab-pane fade" id="api" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">API Configuration</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="api-settings-form">
+                                    <div class="mb-3">
+                                        <label class="form-label">Market Data API Key</label>
+                                        <input type="text" class="form-control" id="market-data-api-key" placeholder="Enter your API key">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Market Data API URL</label>
+                                        <input type="text" class="form-control" id="market-data-api-url" value="https://api.example.com/v1/marketdata">
+                                    </div>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i> 
+                                        Market data is essential for signal generation. Make sure to provide valid API credentials.
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">API Request Timeout (seconds)</label>
+                                        <input type="number" class="form-control" id="api-timeout" value="10" min="1" max="60">
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="use-mock-data">
+                                        <label class="form-check-label" for="use-mock-data">
+                                            Use Mock Data When API is Unavailable
+                                        </label>
+                                        <div class="form-text">Enable this to use simulated data when the API is unavailable</div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save API Settings
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-secondary ms-2" id="test-api-connection">
+                                        <i class="fas fa-vial me-1"></i> Test Connection
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Settings -->
+                    <div class="tab-pane fade" id="ai" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">AI Model Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="ai-settings-form">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="use-ai-models" checked>
+                                        <label class="form-check-label" for="use-ai-models">
+                                            Enable AI-Powered Predictions
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">AI Confidence Weight</label>
+                                        <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.3" id="ai-confidence-weight">
+                                        <div class="d-flex justify-content-between">
+                                            <span>0.0</span>
+                                            <span>0.5</span>
+                                            <span>1.0</span>
+                                        </div>
+                                        <div class="form-text">Weight of AI predictions in the final signal (0-1)</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Training Data Period (days)</label>
+                                        <select class="form-select" id="training-period">
+                                            <option value="30">30 days</option>
+                                            <option value="60">60 days</option>
+                                            <option value="90" selected>90 days</option>
+                                            <option value="180">180 days</option>
+                                            <option value="365">365 days</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Model Retraining Frequency</label>
+                                        <select class="form-select" id="retraining-frequency">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly" selected>Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="use-advanced-features" checked>
+                                        <label class="form-check-label" for="use-advanced-features">
+                                            Use Advanced Feature Engineering
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        AI models require significant historical data for accurate predictions.
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save AI Settings
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-secondary ms-2" id="retrain-models">
+                                        <i class="fas fa-sync me-1"></i> Retrain Models
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load saved settings
+        loadSettings();
+        
+        // Form submit handlers
+        document.getElementById('general-settings-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveGeneralSettings();
+        });
+        
+        document.getElementById('signal-settings-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSignalSettings();
+        });
+        
+        document.getElementById('strategy-weights-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveStrategyWeights();
+        });
+        
+        document.getElementById('notification-settings-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveNotificationSettings();
+        });
+        
+        document.getElementById('api-settings-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveAPISettings();
+        });
+        
+        document.getElementById('ai-settings-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveAISettings();
+        });
+        
+        // Test API connection button
+        document.getElementById('test-api-connection').addEventListener('click', testAPIConnection);
+        
+        // Retrain models button
+        document.getElementById('retrain-models').addEventListener('click', retrainModels);
+    });
+    
+    // Load settings from the server
+    function loadSettings() {
+        fetch('/api/settings')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    populateSettingsForm(data.settings);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading settings:', error);
+            });
+    }
+    
+    // Populate the settings form with values from the server
+    function populateSettingsForm(settings) {
+        // General settings
+        if (settings.general) {
+            document.getElementById('data-fetch-interval').value = settings.general.data_fetch_interval || 60;
+            document.getElementById('app-theme').value = settings.general.theme || 'dark';
+            document.getElementById('default-timeframe').value = settings.general.default_timeframe || '7d';
+            document.getElementById('enable-animations').checked = settings.general.enable_animations !== false;
+        }
+        
+        // Signal settings
+        if (settings.signal) {
+            document.getElementById('signal-interval').value = settings.signal.signal_interval || 300;
+            document.getElementById('confidence-threshold').value = settings.signal.confidence_threshold || 75;
+            document.getElementById('risk-reward-ratio').value = settings.signal.risk_reward_ratio || 2;
+            document.getElementById('enable-binary-signals').checked = settings.signal.enable_binary_signals !== false;
+            document.getElementById('enable-forex-signals').checked = settings.signal.enable_forex_signals !== false;
+        }
+        
+        // Strategy weights
+        if (settings.strategy_weights) {
+            document.getElementById('trend-following-weight').value = settings.strategy_weights.trend_following || 0.8;
+            document.getElementById('mean-reversion-weight').value = settings.strategy_weights.mean_reversion || 0.7;
+            document.getElementById('breakout-weight').value = settings.strategy_weights.breakout || 0.9;
+            document.getElementById('support-resistance-weight').value = settings.strategy_weights.support_resistance || 0.85;
+            document.getElementById('momentum-weight').value = settings.strategy_weights.momentum || 0.75;
+            document.getElementById('volatility-weight').value = settings.strategy_weights.volatility || 0.7;
+            document.getElementById('pattern-recognition-weight').value = settings.strategy_weights.pattern_recognition || 0.8;
+            document.getElementById('oscillator-weight').value = settings.strategy_weights.oscillator || 0.75;
+            document.getElementById('divergence-weight').value = settings.strategy_weights.divergence || 0.8;
+            document.getElementById('elliott-wave-weight').value = settings.strategy_weights.elliott_wave || 0.7;
+        }
+        
+        // Notification settings
+        if (settings.notification) {
+            document.getElementById('enable-browser-notifications').checked = settings.notification.enable_browser_notifications !== false;
+            document.getElementById('enable-telegram-notifications').checked = settings.notification.enable_telegram_notifications !== false;
+            document.getElementById('telegram-token').value = settings.notification.telegram_token || '';
+            document.getElementById('telegram-chat-ids').value = settings.notification.telegram_chat_ids || '';
+            document.getElementById('notify-signals').checked = settings.notification.notify_signals !== false;
+            document.getElementById('notify-alerts').checked = settings.notification.notify_alerts !== false;
+            document.getElementById('notify-system').checked = settings.notification.notify_system !== false;
+        }
+        
+        // API settings
+        if (settings.api) {
+            document.getElementById('market-data-api-key').value = settings.api.market_data_api_key || '';
+            document.getElementById('market-data-api-url').value = settings.api.market_data_api_url || 'https://api.example.com/v1/marketdata';
+            document.getElementById('api-timeout').value = settings.api.api_timeout || 10;
+            document.getElementById('use-mock-data').checked = settings.api.use_mock_data === true;
+        }
+        
+        // AI settings
+        if (settings.ai) {
+            document.getElementById('use-ai-models').checked = settings.ai.use_ai_models !== false;
+            document.getElementById('ai-confidence-weight').value = settings.ai.ai_confidence_weight || 0.3;
+            document.getElementById('training-period').value = settings.ai.training_period || 90;
+            document.getElementById('retraining-frequency').value = settings.ai.retraining_frequency || 'weekly';
+            document.getElementById('use-advanced-features').checked = settings.ai.use_advanced_features !== false;
+        }
+    }
+    
+    // Save general settings
+    function saveGeneralSettings() {
+        const settings = {
+            data_fetch_interval: parseInt(document.getElementById('data-fetch-interval').value),
+            theme: document.getElementById('app-theme').value,
+            default_timeframe: document.getElementById('default-timeframe').value,
+            enable_animations: document.getElementById('enable-animations').checked
+        };
+        
+        saveSettings('general', settings);
+    }
+    
+    // Save signal settings
+    function saveSignalSettings() {
+        const settings = {
+            signal_interval: parseInt(document.getElementById('signal-interval').value),
+            confidence_threshold: parseInt(document.getElementById('confidence-threshold').value),
+            risk_reward_ratio: parseFloat(document.getElementById('risk-reward-ratio').value),
+            enable_binary_signals: document.getElementById('enable-binary-signals').checked,
+            enable_forex_signals: document.getElementById('enable-forex-signals').checked
+        };
+        
+        saveSettings('signal', settings);
+    }
+    
+    // Save strategy weights
+    function saveStrategyWeights() {
+        const settings = {
+            trend_following: parseFloat(document.getElementById('trend-following-weight').value),
+            mean_reversion: parseFloat(document.getElementById('mean-reversion-weight').value),
+            breakout: parseFloat(document.getElementById('breakout-weight').value),
+            support_resistance: parseFloat(document.getElementById('support-resistance-weight').value),
+            momentum: parseFloat(document.getElementById('momentum-weight').value),
+            volatility: parseFloat(document.getElementById('volatility-weight').value),
+            pattern_recognition: parseFloat(document.getElementById('pattern-recognition-weight').value),
+            oscillator: parseFloat(document.getElementById('oscillator-weight').value),
+            divergence: parseFloat(document.getElementById('divergence-weight').value),
+            elliott_wave: parseFloat(document.getElementById('elliott-wave-weight').value)
+        };
+        
+        saveSettings('strategy_weights', settings);
+    }
+    
+    // Save notification settings
+    function saveNotificationSettings() {
+        const settings = {
+            enable_browser_notifications: document.getElementById('enable-browser-notifications').checked,
+            enable_telegram_notifications: document.getElementById('enable-telegram-notifications').checked,
+            telegram_token: document.getElementById('telegram-token').value,
+            telegram_chat_ids: document.getElementById('telegram-chat-ids').value,
+            notify_signals: document.getElementById('notify-signals').checked,
+            notify_alerts: document.getElementById('notify-alerts').checked,
+            notify_system: document.getElementById('notify-system').checked
+        };
+        
+        saveSettings('notification', settings);
+    }
+    
+    // Save API settings
+    function saveAPISettings() {
+        const settings = {
+            market_data_api_key: document.getElementById('market-data-api-key').value,
+            market_data_api_url: document.getElementById('market-data-api-url').value,
+            api_timeout: parseInt(document.getElementById('api-timeout').value),
+            use_mock_data: document.getElementById('use-mock-data').checked
+        };
+        
+        saveSettings('api', settings);
+    }
+    
+    // Save AI settings
+    function saveAISettings() {
+        const settings = {
+            use_ai_models: document.getElementById('use-ai-models').checked,
+            ai_confidence_weight: parseFloat(document.getElementById('ai-confidence-weight').value),
+            training_period: parseInt(document.getElementById('training-period').value),
+            retraining_frequency: document.getElementById('retraining-frequency').value,
+            use_advanced_features: document.getElementById('use-advanced-features').checked
+        };
+        
+        saveSettings('ai', settings);
+    }
+    
+    // Save settings to the server
+    function saveSettings(category, data) {
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                category: category,
+                settings: data
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', 'Settings saved successfully');
+            } else {
+                showAlert('danger', 'Failed to save settings: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving settings:', error);
+            showAlert('danger', 'Failed to save settings: ' + error.message);
+        });
+    }
+    
+    // Test API connection
+    function testAPIConnection() {
+        const apiKey = document.getElementById('market-data-api-key').value;
+        const apiUrl = document.getElementById('market-data-api-url').value;
+        
+        if (!apiKey || !apiUrl) {
+            showAlert('warning', 'Please enter API key and URL first');
+            return;
+        }
+        
+        const button = document.getElementById('test-api-connection');
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Testing...';
+        button.disabled = true;
+        
+        fetch('/api/test_connection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                api_key: apiKey,
+                api_url: apiUrl
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.innerHTML = '<i class="fas fa-vial me-1"></i> Test Connection';
+            button.disabled = false;
+            
+            if (data.success) {
+                showAlert('success', 'Connection successful: ' + data.message);
+            } else {
+                showAlert('danger', 'Connection failed: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error testing connection:', error);
+            button.innerHTML = '<i class="fas fa-vial me-1"></i> Test Connection';
+            button.disabled = false;
+            showAlert('danger', 'Connection error: ' + error.message);
+        });
+    }
+    
+    // Retrain AI models
+    function retrainModels() {
+        const button = document.getElementById('retrain-models');
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Retraining...';
+        button.disabled = true;
+        
+        fetch('/api/retrain_models', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.innerHTML = '<i class="fas fa-sync me-1"></i> Retrain Models';
+            button.disabled = false;
+            
+            if (data.success) {
+                showAlert('success', 'Models retrained successfully');
+            } else {
+                showAlert('danger', 'Failed to retrain models: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error retraining models:', error);
+            button.innerHTML = '<i class="fas fa-sync me-1"></i> Retrain Models';
+            button.disabled = false;
+            showAlert('danger', 'Error retraining models: ' + error.message);
+        });
+    }
+    
+    // Show alert
+    function showAlert(type, message) {
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Find tab content to append alert to
+        const activeTab = document.querySelector('.tab-pane.active');
+        activeTab.insertBefore(alertDiv, activeTab.firstChild);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => alertDiv.remove(), 150);
+        }, 5000);
+    }
+</script>
+{% endblock %}
